@@ -1,5 +1,5 @@
 # Quadrilateral Translation
-Translates Quadrilateral's points to Square's points
+Translates Quadrilateral's points to Rectangle's points
 
 ![Translation](https://raw.githubusercontent.com/9-volt/quadrilateral_translation/master/quadrilateral-translation.png)
 
