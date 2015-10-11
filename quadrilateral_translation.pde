@@ -1,83 +1,106 @@
 import Jama.*;
 
+class QuadRectTransform {
+  public QuadRectTransform(PVector q1, PVector q2, PVector q3, PVector q4,
+                   PVector r1, PVector r2, PVector r3, PVector r4) {
+
+    Matrix A = new Matrix(new double[][]{
+      { r1.x, r1.y, 1., 0., 0., 0., (-q1.x)*r1.x, (-q1.x)*r1.y },
+      { 0., 0., 0., r1.x, r1.y, 1., (-q1.y)*r1.x, (-q1.y)*r1.y },
+      { r2.x, r2.y, 1., 0., 0., 0., (-q2.x)*r2.x, (-q2.x)*r2.y },
+      { 0., 0., 0., r2.x, r2.y, 1., (-q2.y)*r2.x, (-q2.y)*r2.y },
+      { r3.x, r3.y, 1., 0., 0., 0., (-q3.x)*r3.x, (-q3.x)*r3.y },
+      { 0., 0., 0., r3.x, r3.y, 1., (-q3.y)*r3.x, (-q3.y)*r3.y },
+      { r4.x, r4.y, 1., 0., 0., 0., (-q4.x)*r4.x, (-q4.x)*r4.y },
+      { 0., 0., 0., r4.x, r4.y, 1., (-q4.y)*r4.x, (-q4.y)*r4.y }
+    });
+
+    Matrix B = new Matrix(new double[][]{
+      { q1.x },
+      { q1.y },
+      { q2.x },
+      { q2.y },
+      { q3.x },
+      { q3.y },
+      { q4.x },
+      { q4.y }
+    });
+
+    Matrix s = A.solve(B);
+
+    rect2quadMat = new Matrix(new double[][]{
+      { s.get(0, 0), s.get(1, 0), s.get(2, 0) },
+      { s.get(3, 0), s.get(4, 0), s.get(5, 0) },
+      { s.get(6, 0), s.get(7, 0), 1. }
+    });
+
+    quad2rectMat = rect2quadMat.inverse();
+  }
+
+  /*
+  Translates a (x, y) quadrilateral point into (X, Y) rectangle point
+  */
+  public PVector quad2rect(PVector v) {
+    return transform(quad2rectMat, v);
+  }
+
+  /*
+  Translates a (X, Y) rectangle point into (x, y) quadrilateral point
+  */
+  public PVector rect2quad(PVector v) {
+    return transform(rect2quadMat, v);
+  }
+
+  private PVector transform(Matrix transformMat, PVector v) {
+    Matrix columnVec = new Matrix(new double[][]{
+      { v.x },
+      { v.y },
+      { 1. }
+    });
+
+    Matrix result = transformMat.times(columnVec);
+
+    return new PVector(new Float(result.get(0, 0) / result.get(2, 0)),
+                       new Float(result.get(1, 0) / result.get(2, 0)));
+  }
+
+
+  private Matrix rect2quadMat;
+  private Matrix quad2rectMat;
+}
+
+
+PVector q1, q2, q3, q4, r1, r2, r3, r4;
+
 // Quadrilateral coordinates (top-left, bottom-left, bottom-right, top-right) to transform from
-double X1 = 0.;
-double Y1 = 0.;
-double X2 = 10.;
-double Y2 = 40.;
-double X3 = 100.;
-double Y3 = 35.;
-double X4 = 70.;
-double Y4 = 0.;
+q1 = new PVector(0, 0);
+q2 = new PVector(10, 40);
+q3 = new PVector(100, 35);
+q4 = new PVector(70, 0);
+
 
 // Rectangle coordinates to transform to (theoretically may be any quadrilateral)
-double x1 = 0.;
-double y1 = 0.;
-double x2 = 0.;
-double y2 = 40.;
-double x3 = 100.;
-double y3 = 40.;
-double x4 = 100.;
-double y4 = 0.;
+r1 = new PVector(0, 0);
+r2 = new PVector(0, 40);
+r3 = new PVector(100, 40);
+r4 = new PVector(100, 0);
 
-Matrix A = new Matrix(new double[][]{
-  { x1, y1, 1., 0., 0., 0., (-X1)*x1, (-X1)*y1 },
-  { 0., 0., 0., x1, y1, 1., (-Y1)*x1, (-Y1)*y1 },
-  { x2, y2, 1., 0., 0., 0., (-X2)*x2, (-X2)*y2 },
-  { 0., 0., 0., x2, y2, 1., (-Y2)*x2, (-Y2)*y2 },
-  { x3, y3, 1., 0., 0., 0., (-X3)*x3, (-X3)*y3 },
-  { 0., 0., 0., x3, y3, 1., (-Y3)*x3, (-Y3)*y3 },
-  { x4, y4, 1., 0., 0., 0., (-X4)*x4, (-X4)*y4 },
-  { 0., 0., 0., x4, y4, 1., (-Y4)*x4, (-Y4)*y4 }
-});
+PVector v = new PVector(69, 1);
 
-Matrix B = new Matrix(new double[][]{
-  { X1 },
-  { Y1 },
-  { X2 },
-  { Y2 },
-  { X3 },
-  { Y3 },
-  { X4 },
-  { Y4 }
-});
+QuadRectTransform t = new QuadRectTransform(q1, q2, q3, q4, r1, r2, r3, r4);
 
-Matrix s = A.solve(B);
+PVector u = t.quad2rect(v);
 
-Matrix N = new Matrix(new double[][]{
-  { s.get(0, 0), s.get(1, 0), s.get(2, 0) },
-  { s.get(3, 0), s.get(4, 0), s.get(5, 0) },
-  { s.get(6, 0), s.get(7, 0), 1. }
-});
-
-/*
-  Translates a (x, y) quadrilateral point into (X, Y) rectangle point
-*/
-
-double x = 69.;
-double y = 1.;
-
-Matrix M = new Matrix(new double[][]{
-  { x },
-  { y },
-  { 1. }
-});
-
-Matrix L = N.inverse().times(M);
-
-double X = L.get(0, 0) / L.get(2, 0);
-double Y = L.get(1, 0) / L.get(2, 0);
-
-println("From ", x, ",", y, " to ", X, ",", Y);
+println("From ", v.x, ",", v.y, " to ", u.x, ",", u.y);
 
 /*
  * Draws a gradient over a quadrilateral and its translation over a rectangle
- */ 
+ */
 
 PImage canvas;
 PVector point = new PVector(0, 0);
 
-size(300, 90); 
+size(300, 90);
 
 // Use this polygon to check if a point is inside the poligon
 java.awt.Polygon cornersPolygon = new java.awt.Polygon();
@@ -99,24 +122,17 @@ for (j = 0; j < 40; j++) {
     if (cornersPolygon.contains(i, j)) {
       // Draw quadrilateral point
       canvas.pixels[p] = color(128 + i, 255 - j, i+j);
-      
+
       // Compute rectangle point
-      M = new Matrix(new double[][]{
-        { i },
-        { j },
-        { 1. }
-      });
-      L = N.inverse().times(M);
-      point.x = (float)(L.get(0, 0) / L.get(2, 0));
-      point.y = (float)(L.get(1, 0) / L.get(2, 0));
-      
+      point = t.quad2rect(new PVector(i, j));
+
       if (point.y >= -25 && point.y < 65 && point.x >= -25 && point.x < 125) {
         // Offset image by 175 and 25 pixels on x and y axis respectively
         canvas.pixels[((int)point.y + 25) * 300 + ((int)point.x + 175)] = color(128 + i, 255 - j, i+j);
       }
     }
   }
-} 
+}
 
 // Draw canvas
 canvas.updatePixels();
